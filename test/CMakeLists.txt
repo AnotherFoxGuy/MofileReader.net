@@ -1,8 +1,12 @@
 project(moFileReaderTest)
 
+set(TEST_MO_FILE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/languages")
+
+configure_file("config.cs.in" "config.cs")
 
 set(SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/src/moFileReader.cs
+    ${CMAKE_CURRENT_BINARY_DIR}/config.cs
 )
 
 add_library(test SHARED ${SOURCE_FILES} moFileReader_tests.cs)
@@ -17,26 +21,17 @@ set(DOTNET_REF
     WindowsBase
 )
 
-set(NUGET_PKGS_TEST
-    NUnit_3.13.2
-    NUnit.Console_3.12.0
-)
-
-set(NUGET_PKGS_BENCH
-   BenchmarkDotNet_0.13.1
-)
-
 # Set CLR assembly properties.
 set_target_properties(test PROPERTIES
 	WIN32_EXECUTABLE TRUE
-    VS_DOTNET_REFERENCES "${DOTNET_REF}"
-    VS_PACKAGE_REFERENCES "${NUGET_PKGS_TEST}"
+    VS_DOTNET_REFERENCES "${DOTNET_REF};nunit.framework"
+    VS_PACKAGE_REFERENCES "NUnit_3.13.2;NUnit.Console_3.12.0"
     VS_GLOBAL_ROOTNAMESPACE ${PROJECT_NAME}
 )
 
 set_target_properties(bench PROPERTIES
 	WIN32_EXECUTABLE TRUE
     VS_DOTNET_REFERENCES "${DOTNET_REF}"
-    VS_PACKAGE_REFERENCES "${NUGET_PKGS_BENCH}"
+    VS_PACKAGE_REFERENCES "BenchmarkDotNet_0.13.1"
     VS_GLOBAL_ROOTNAMESPACE ${PROJECT_NAME}
 )

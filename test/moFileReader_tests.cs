@@ -2,18 +2,14 @@ using System;
 using System.IO;
 using NUnit.Framework;
 using static moFileLib.ConvenienceClasses;
+using static CmakeData;
 
 namespace moFileLib
 {
     [TestFixture]
     public class moFileLibTests
     {
-        private string MO_TEST_FILE = "languages/nl.mo";
-
-        // [SetUp]
-        // protected void SetUp()
-        // {
-        // }
+        private string MO_TEST_FILE = $"{DataDir}/nl.mo";
 
         [Test]
         public void LoadMoFile()

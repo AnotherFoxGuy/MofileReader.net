@@ -1,0 +1,4 @@
+public static class CmakeData
+{
+    public static string DataDir = "@TEST_MO_FILE_DIR@";
+}
