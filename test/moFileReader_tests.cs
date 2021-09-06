@@ -1,11 +1,12 @@
+using System;
+using System.IO;
 using NUnit.Framework;
-using moFileLib;
+using static moFileLib.ConvenienceClasses;
 
-
-namespace BeatLibrary
+namespace moFileLib
 {
     [TestFixture]
-    public class ScannerTests
+    public class moFileLibTests
     {
         private string MO_TEST_FILE = "languages/nl.mo";
 
@@ -19,25 +20,25 @@ namespace BeatLibrary
         {
             var moFR = new moFileReader();
             var res = moFR.ReadFile(MO_TEST_FILE);
-            Assert.AreEqual(moFileReader.eErrorCode.EC_SUCCESS, res);
+            Assert.AreEqual(moFileReader.ErrorCode.SUCCESS, res);
         }
 
         [Test]
         public void LoadBrokenFile()
         {
             var moFR = new moFileReader();
-            var res = moFR.ReadFile("languages/fail.txt");
-            Assert.AreEqual(moFileReader.eErrorCode.EC_FILEINVALID, res);
+            Console.WriteLine(moFR.GetErrorDescription());
+            Assert.AreEqual(moFileReader.ErrorCode.FILEINVALID, moFR.ReadFile("languages/fail.txt"));
         }
 
         [Test]
         public void LoadNoMoFile()
         {
             var moFR = new moFileReader();
-            Assert.AreEqual(moFileReader.eErrorCode.EC_FILENOTFOUND, moFR.ReadFile("XD"));
+            Console.WriteLine(moFR.GetErrorDescription());
+            Assert.AreEqual(moFileReader.ErrorCode.FILENOTFOUND, moFR.ReadFile("XD"));
         }
-
-
+        
         [Test]
         public void CountStrings()
         {
@@ -62,7 +63,7 @@ namespace BeatLibrary
         public void LookupString()
         {
             var moFR = new moFileReader();
-            var x = moFR.ReadFile(MO_TEST_FILE);
+            moFR.ReadFile(MO_TEST_FILE);
             /* This is the first comment. */
             Assert.AreEqual("Text Nederlands Een", moFR.Lookup("String English One"));
             /* This is the second comment. */
@@ -100,6 +101,38 @@ namespace BeatLibrary
             moFR.ReadFile(MO_TEST_FILE);
             Assert.AreEqual("String English", moFR.LookupWithContext("Nope", "String English"));
             Assert.AreEqual("Not this one", moFR.LookupWithContext("TEST|String|1", "Not this one"));
+        }
+    }
+
+    [TestFixture]
+    public class ConvenienceClassesTests
+    {
+        private string MO_TEST_FILE = "languages/nl.mo";
+        
+        [Test]
+        public void LoadMoFile()
+        {
+            var res = moReadMoFile(MO_TEST_FILE);
+            Assert.AreEqual(moFileReader.ErrorCode.SUCCESS, res);
+        }
+        
+        [Test]
+        public void CountStrings()
+        {
+            moReadMoFile(MO_TEST_FILE);
+            Assert.AreEqual(7, moFileGetNumStrings());
+        }
+
+        [Test]
+        public void LookupString()
+        {
+            moReadMoFile(MO_TEST_FILE);
+            /* This is the first comment. */
+            Assert.AreEqual("Text Nederlands Een", _("String English One"));
+            /* This is the second comment. */
+            Assert.AreEqual("Text Nederlands Twee", _("String English Two"));
+            /* This is the third comment.  */
+            Assert.AreEqual("Text Nederlands Drie", _("String English Three"));
         }
     }
 }

@@ -52,8 +52,8 @@ namespace moFileLib
 
     /**
      * \brief Keeps the Description of translated and original strings.
-     *
-     *
+     * 
+     * 
      * To load a String from the file, we need its offset and its length.
      * This struct helps us grouping this information.
      */
@@ -70,12 +70,12 @@ namespace moFileLib
 
         /// \brief Offset of the Translated String (absolute)
         public int m_trOffset;
-    };
+    }
 
     /**
      * \brief Describes the "Header" of a .mo-File.
-     *
-     *
+     * 
+     * 
      * The File info keeps the header of a .mo-file and
      * a list of the string-descriptions.
      * The typedef is for the type of the string-list.
@@ -105,19 +105,20 @@ namespace moFileLib
         /// \brief The Offset of the Hashtable.
         public int m_offsetHashtable;
 
-        /** \brief Tells you if the bytes are reversed
+        /**
+         * \brief Tells you if the bytes are reversed
          * \note When this is true, the bytes are reversed and the Magic number is like g_MagicReversed
          */
         public bool m_reversed;
 
         /// \brief A list containing offset and length of the strings in the file.
         public moTranslationPairList m_translationPairInformation;
-    };
+    }
 
     /**
      * \brief This class is a gettext-replacement.
-     *
-     *
+     * 
+     * 
      * The usage is quite simple:\n
      * Tell the class which .mo-file it shall load via
      * moFileReader::ReadFile(). The method will attempt to load
@@ -128,52 +129,52 @@ namespace moFileLib
      * like. But please be aware, that if there are duplicated keys (original strings),
      * that they will replace each other in the lookup-table. There is no check done, if a
      * key already exists.
-     *
+     * 
      * \note If you add "Lookup" to the keywords of the gettext-parser (like poEdit),
      * it will recognize the Strings loaded with an instance of this class.
      * \note I strongly recommend poEdit from Vaclav Slavik for editing .po-Files,
-     *       get it at http://poedit.net for various systems :).
+     * get it at http://poedit.net for various systems :).
      */
     public class moFileReader
     {
-        /// \brief The Magic Number describes the endianess of bytes on the system.
-        const uint MagicNumber = 0x950412DE;
-
-        /// \brief If the Magic Number is Reversed, we need to swap the bytes.
-        const uint MagicReversed = 0xDE120495;
-
-        /// \brief The character that is used to separate context strings
-        const char ContextSeparator = '\x04';
-
         /// \brief The possible errorcodes for methods of this class
-        public enum eErrorCode
+        public enum ErrorCode
         {
             /// \brief Indicated success
-            EC_SUCCESS = 0,
+            SUCCESS,
 
             /// \brief Indicates an error
-            EC_ERROR,
+            ERROR,
 
             /// \brief The given File was not found.
-            EC_FILENOTFOUND,
+            FILENOTFOUND,
 
             /// \brief The file is invalid.
-            EC_FILEINVALID,
+            FILEINVALID,
 
             /// \brief Empty Lookup-Table (returned by ExportAsHTML())
-            EC_TABLEEMPTY,
+            TABLEEMPTY,
 
             /// \brief The magic number did not match
-            EC_MAGICNUMBER_NOMATCH,
+            MAGICNUMBER_NOMATCH,
 
             /**
-         * \brief The magic number is reversed.
-         * \note This is an error until the class supports it.
-         */
-            EC_MAGICNUMBER_REVERSED,
-        };
+             * \brief The magic number is reversed.
+             * \note This is an error until the class supports it.
+             */
+            MAGICNUMBER_REVERSED
+        }
 
-        const string g_css = @"(
+        /// \brief The Magic Number describes the endianess of bytes on the system.
+        private const uint MagicNumber = 0x950412DE;
+
+        /// \brief If the Magic Number is Reversed, we need to swap the bytes.
+        private const uint MagicReversed = 0xDE120495;
+
+        /// \brief The character that is used to separate context strings
+        private const char ContextSeparator = '\x04';
+
+        private const string g_css = @"(
             body {
                  background-color: black;
                  color: silver;
@@ -204,16 +205,26 @@ namespace moFileLib
                  text-align: center;
             })";
 
+        /// \brief Keeps the last error as String.
+        private string m_error;
 
-        /** \brief Reads a .mo-file
+        // Holds the lookup-table
+        private moLookupList m_lookup;
+        private moContextLookupList m_lookup_context;
+
+        private int numStrings;
+
+
+        /**
+         * \brief Reads a .mo-file
          * \param[in] _filename The path to the file to load.
          * \return SUCCESS on success or one of the other error-codes in eErrorCode on error.
-         *
+         * 
          * This is the core-feature. This method loads the .mo-file and stores
          * all translation-pairs in a map. You can access this map via the method
          * moFileReader::Lookup().
          */
-        eErrorCode ParseData(string data)
+        public ErrorCode ParseData(string data)
         {
             // Opening the file.
             var stream = new MemoryStream();
@@ -224,20 +235,21 @@ namespace moFileLib
             return ReadStream(stream);
         }
 
-        /** \brief Reads a .mo-file
+        /**
+         * \brief Reads a .mo-file
          * \param[in] _filename The path to the file to load.
          * \return SUCCESS on success or one of the other error-codes in eErrorCode on error.
-         *
+         * 
          * This is the core-feature. This method loads the .mo-file and stores
          * all translation-pairs in a map. You can access this map via the method
          * moFileReader::Lookup().
          */
-        public eErrorCode ReadFile(string filename)
+        public ErrorCode ReadFile(string filename)
         {
             if (!File.Exists(filename))
             {
                 m_error = $"Cannot open File {filename}";
-                return eErrorCode.EC_FILENOTFOUND;
+                return ErrorCode.FILENOTFOUND;
             }
             // Opening the file.
 
@@ -246,12 +258,12 @@ namespace moFileLib
         }
 
 
-        /** \brief Reads data from a stream
+        /**
+         * \brief Reads data from a stream
          * \param[in] stream
          * \return SUCCESS on success or one of the other error-codes in eErrorCode on error.
-         *
          */
-        eErrorCode ReadStream(Stream stream)
+        private ErrorCode ReadStream(Stream stream)
         {
             // Creating a file-description.
             moFileInfo moInfo;
@@ -272,10 +284,10 @@ namespace moFileLib
             moInfo.m_sizeHashtable = stream.ReadInt(4);
             moInfo.m_offsetHashtable = stream.ReadInt(4);
 
-            if (moInfo.m_magicNumber == 0)
+            if (moInfo.m_magicNumber == 0 || moInfo.m_numStrings == 0)
             {
                 m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
-                return eErrorCode.EC_FILEINVALID;
+                return ErrorCode.FILEINVALID;
             }
 
             // Checking the Magic Number
@@ -284,79 +296,85 @@ namespace moFileLib
                 if (MagicReversed != moInfo.m_magicNumber)
                 {
                     m_error = "The Magic Number does not match in all cases!";
-                    return eErrorCode.EC_MAGICNUMBER_NOMATCH;
+                    return ErrorCode.MAGICNUMBER_NOMATCH;
                 }
-                else
-                {
-                    moInfo.m_reversed = true;
-                    m_error = "Magic Number is reversed. We do not support this yet!";
-                    return eErrorCode.EC_MAGICNUMBER_REVERSED;
-                }
+
+                moInfo.m_reversed = true;
+                m_error = "Magic Number is reversed. We do not support this yet!";
+                return ErrorCode.MAGICNUMBER_REVERSED;
             }
 
             // Now we search all Length & Offsets of the original strings
             for (var i = 0; i < moInfo.m_numStrings; i++)
-            {
-                var str = new moTranslationPairInformation();
-                str.m_orLength = stream.ReadInt(4);
-                str.m_orOffset = stream.ReadInt(4);
-
-                // if (str.m_orLength == 0 || str.m_orOffset == 0)
-                // {
-                //     m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
-                //     return eErrorCode.EC_FILEINVALID;
-                // }
-
-                TransPairInfo.Add(str);
-            }
+                try
+                {
+                    var str = new moTranslationPairInformation
+                    {
+                        m_orLength = stream.ReadInt(4),
+                        m_orOffset = stream.ReadInt(4)
+                    };
+                    TransPairInfo.Add(str);
+                }
+                catch
+                {
+                    m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
+                    return ErrorCode.FILEINVALID;
+                }
 
             // Get all Lengths & Offsets of the translated strings
             // Be aware: The Descriptors already exist in our list, so we just mod. refs from the deque.
-            for (int i = 0; i < moInfo.m_numStrings; i++)
-            {
-                var str = TransPairInfo[i];
-                str.m_trLength = stream.ReadInt(4);
-                str.m_trOffset = stream.ReadInt(4);
-
-                // if (str.m_trLength == 0 || str.m_trOffset == 0)
-                // {
-                //     m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
-                //     return eErrorCode.EC_FILEINVALID;
-                // }
-                TransPairInfo[i] = str;
-            }
+            for (var i = 0; i < moInfo.m_numStrings; i++)
+                try
+                {
+                    var str = TransPairInfo[i];
+                    str.m_trLength = stream.ReadInt(4);
+                    str.m_trOffset = stream.ReadInt(4);
+                    TransPairInfo[i] = str;
+                }
+                catch
+                {
+                    m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
+                    return ErrorCode.FILEINVALID;
+                }
 
             // Normally you would read the hash-table here, but we don't use it. :)
 
             // Now to the interesting part, we read the strings-pairs now
-            for (int i = 0; i < moInfo.m_numStrings; i++)
+            for (var i = 0; i < moInfo.m_numStrings; i++)
             {
                 // We need a length of +1 to catch the trailing \0.
-                int orLength = TransPairInfo[i].m_orLength;
-                int trLength = TransPairInfo[i].m_trLength;
+                var orLength = TransPairInfo[i].m_orLength;
+                var trLength = TransPairInfo[i].m_trLength;
 
-                int orOffset = TransPairInfo[i].m_orOffset;
-                int trOffset = TransPairInfo[i].m_trOffset;
+                var orOffset = TransPairInfo[i].m_orOffset;
+                var trOffset = TransPairInfo[i].m_trOffset;
+
+                var original = "";
+                var translation = "";
 
                 // Original
-                stream.Seek(orOffset, SeekOrigin.Begin);
-                var original = stream.ReadString(orLength);
-
-                // if (original.Length == 0)
-                // {
-                //     m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
-                //     return eErrorCode.EC_FILEINVALID;
-                // }
+                try
+                {
+                    stream.Seek(orOffset, SeekOrigin.Begin);
+                    original = stream.ReadString(orLength);
+                }
+                catch
+                {
+                    m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
+                    return ErrorCode.FILEINVALID;
+                }
 
                 // Translation
-                stream.Seek(trOffset, SeekOrigin.Begin);
-                var translation = stream.ReadString(trLength);
-
-                // if (translation.Length == 0)
-                // {
-                //     m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
-                //     return eErrorCode.EC_FILEINVALID;
-                // }
+                try
+                {
+                    stream.Seek(trOffset, SeekOrigin.Begin);
+                    translation = stream.ReadString(trLength);
+                }
+                catch
+                {
+                    m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
+                    return ErrorCode.FILEINVALID;
+                }
 
                 var ctxSeparator = original.IndexOf(ContextSeparator);
 
@@ -369,6 +387,12 @@ namespace moFileLib
                 else
                 {
                     var l = original.Split(ContextSeparator);
+                    if (l.Length != 2)
+                    {
+                        m_error = "Failed to split string";
+                        return ErrorCode.ERROR;
+                    }
+
                     var context = l[0];
                     var id = l[1];
 
@@ -381,10 +405,11 @@ namespace moFileLib
             }
 
             // Done :)
-            return eErrorCode.EC_SUCCESS;
+            return ErrorCode.SUCCESS;
         }
 
-        /** \brief Returns the searched translation or returns the input.
+        /**
+         * \brief Returns the searched translation or returns the input.
          * \param[in] id The id of the translation to search for.
          * \return The value you passed in via _id or the translated string.
          */
@@ -394,7 +419,8 @@ namespace moFileLib
             return m_lookup.ContainsKey(id) ? m_lookup[id] : id;
         }
 
-        /** \brief Returns the searched translation or returns the input, restricted to the context given by context.
+        /**
+         * \brief Returns the searched translation or returns the input, restricted to the context given by context.
          * See https://www.gnu.org/software/gettext/manual/html_node/Contexts.html for more info.
          * \param[in] context Restrict to the context given.
          * \param[in] id The id of the translation to search for.
@@ -406,8 +432,8 @@ namespace moFileLib
                 !m_lookup_context.ContainsKey(context) ||
                 !m_lookup_context[context].ContainsKey(id))
                 return id;
-            
-            return m_lookup_context[context][id] ;
+
+            return m_lookup_context[context][id];
         }
 
         /// \brief Returns the Error Description.
@@ -424,23 +450,25 @@ namespace moFileLib
             numStrings = 0;
         }
 
-        /** \brief Returns the Number of Entries in our Lookup-Table.
+        /**
+         * \brief Returns the Number of Entries in our Lookup-Table.
          * \note The mo-File-table always contains an empty msgid, which contains informations
-         *       about the tranlsation-project. So the real number of strings is always minus 1.
+         * about the tranlsation-project. So the real number of strings is always minus 1.
          */
         public int GetNumStrings()
         {
             return numStrings;
         }
 
-        /** \brief Exports the whole content of the .mo-File as .html
+        /**
+         * \brief Exports the whole content of the .mo-File as .html
          * \param[in] infile The .mo-File to export.
          * \param[in] filename Where to store the .html-file. If empty, the path and filename of the _infile with .html appended.
          * \param[in,out] css The css-script for the visual style of the
-         *                     file, in case you don't like mine ;).
+         * file, in case you don't like mine ;).
          * \see g_css for the possible and used css-values.
          */
-        static eErrorCode ExportAsHTML(string infile, string filename = "", string css = g_css)
+        private static ErrorCode ExportAsHTML(string infile, string filename = "", string css = g_css)
         {
             // // Read the file
             // moFileReader reader;
@@ -548,31 +576,23 @@ namespace moFileLib
             //     return moFileReader::EC_FILENOTFOUND;
             // }
 
-            return eErrorCode.EC_SUCCESS;
+            return ErrorCode.SUCCESS;
         }
 
-        /// \brief Keeps the last error as String.
-        string m_error;
-
-        /** \brief Swap the endianness of a 4 byte WORD.
-     * \param[in] in The value to swap.
-     * \return The swapped value.
-     */
-        long SwapBytes(long inp)
+        /**
+         * \brief Swap the endianness of a 4 byte WORD.
+         * \param[in] in The value to swap.
+         * \return The swapped value.
+         */
+        private long SwapBytes(long inp)
         {
-            long b0 = (inp >> 0) & 0xff;
-            long b1 = (inp >> 8) & 0xff;
-            long b2 = (inp >> 16) & 0xff;
-            long b3 = (inp >> 24) & 0xff;
+            var b0 = (inp >> 0) & 0xff;
+            var b1 = (inp >> 8) & 0xff;
+            var b2 = (inp >> 16) & 0xff;
+            var b3 = (inp >> 24) & 0xff;
 
             return (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
         }
-
-        // Holds the lookup-table
-        private moLookupList m_lookup;
-        private moContextLookupList m_lookup_context;
-
-        private int numStrings = 0;
 
         // Replaces < with ( to satisfy html-rules.
         private static void MakeHtmlConform(string _inout)
@@ -619,36 +639,32 @@ namespace moFileLib
         }
 
         // Removes spaces from front and end.
-        static void Trim(string _in)
+        private static void Trim(string _in)
         {
-            while (_in[0] == ' ')
-            {
-                _in = _in.Substring(1, _in.Length);
-            }
+            while (_in[0] == ' ') _in = _in.Substring(1, _in.Length);
 
-            while (_in[_in.Length] == ' ')
-            {
-                _in = _in.Substring(0, _in.Length - 1);
-            }
+            while (_in[_in.Length] == ' ') _in = _in.Substring(0, _in.Length - 1);
         }
-    };
+    }
 
-    /** \brief Convenience Class
- *
- *
- * This class derives from moFileReader and builds a singleton to access its methods
- * in a global manner.
- * \note This class is a Singleton. Please access it via moFileReaderSingleton::GetInstance()
- * or use the provided wrappers:\n
- * - moReadMoFile()
- * - _()
- * - moFileClearTable()
- * - moFileGetErrorDescription()
- * - moFileGetNumStrings();
- */
-    class moFileReaderSingleton : moFileReader
+    /**
+     * \brief Convenience Class
+     * 
+     * 
+     * This class derives from moFileReader and builds a singleton to access its methods
+     * in a global manner.
+     * \note This class is a Singleton. Please access it via moFileReaderSingleton::GetInstance()
+     * or use the provided wrappers:\n
+     * - moReadMoFile()
+     * - _()
+     * - moFileClearTable()
+     * - moFileGetErrorDescription()
+     * - moFileGetNumStrings();
+     */
+    public class moFileReaderSingleton : moFileReader
     {
-        static private moFileReaderSingleton theoneandonly;
+        private static readonly Lazy<moFileReader> theoneandonly =
+            new(() => new moFileReader());
 
         // Private Contructor and Copy-Constructor to avoid
         // that this class is instanced.
@@ -656,59 +672,59 @@ namespace moFileLib
         {
         }
 
-        /** \brief Singleton-Accessor.
-     * \return A static instance of moFileReaderSingleton.
-     */
-        public static moFileReaderSingleton GetInstance()
-        {
-            return theoneandonly;
-        }
+        /**
+         * \brief Singleton-Accessor.
+         * \return A static instance of moFileReaderSingleton.
+         */
+        public static moFileReader Instance => theoneandonly.Value;
     }
 
     public static class ConvenienceClasses
     {
-        /** \brief Reads the .mo-File.
-     * \param[in] _filename The path to the file to use.
-     * \see moFileReader::ReadFile() for details.
-     */
-        static moFileReader.eErrorCode moReadMoFile(string _filename)
+        /**
+         * \brief Reads the .mo-File.
+         * \param[in] _filename The path to the file to use.
+         * \see moFileReader::ReadFile() for details.
+         */
+        public static moFileReader.ErrorCode moReadMoFile(string _filename)
         {
-            moFileReader.eErrorCode r = moFileReaderSingleton.GetInstance().ReadFile(_filename);
+            var r = moFileReaderSingleton.Instance.ReadFile(_filename);
             return r;
         }
 
-        /** \brief Looks for the spec. string to translate.
+        /**
+         * \brief Looks for the spec. string to translate.
          * \param[in] id The string-id to search.
          * \return The translation if found, otherwise it returns id.
          */
-        static string _(string id)
+        public static string _(string id)
         {
-            string r = moFileReaderSingleton.GetInstance().Lookup(id);
+            var r = moFileReaderSingleton.Instance.Lookup(id);
             return r;
         }
 
         /// \brief Resets the Lookup-Table.
-        static void moFileClearTable()
+        public static void moFileClearTable()
         {
-            moFileReaderSingleton.GetInstance().ClearTable();
+            moFileReaderSingleton.Instance.ClearTable();
         }
 
         /// \brief Returns the last known error as string or an empty class.
-        static string moFileGetErrorDescription()
+        public static string moFileGetErrorDescription()
         {
-            string r = moFileReaderSingleton.GetInstance().GetErrorDescription();
+            var r = moFileReaderSingleton.Instance.GetErrorDescription();
             return r;
         }
 
         /// \brief Returns the number of entries loaded from the .mo-File.
-        static int moFileGetNumStrings()
+        public static int moFileGetNumStrings()
         {
-            int r = moFileReaderSingleton.GetInstance().GetNumStrings();
+            var r = moFileReaderSingleton.Instance.GetNumStrings();
             return r;
         }
     }
 
-    static class StreamExtensions
+    internal static class StreamExtensions
     {
         public static int ReadInt(this Stream stream, int offset)
         {
