@@ -726,25 +726,24 @@ namespace moFileLib
 
     internal static class StreamExtensions
     {
-        public static int ReadInt(this Stream stream, int offset)
+        public static int ReadInt(this Stream stream, int length)
         {
             var bytes = new byte[8];
-            var r = stream.Read(bytes, offset, 4);
-            return BitConverter.ToInt32(bytes, r);
+            stream.Read(bytes, 0, length);
+            return BitConverter.ToInt32(bytes, 0);
         }
 
-        public static uint ReadUInt(this Stream stream, int offset)
+        public static uint ReadUInt(this Stream stream, int length)
         {
-            var bytes = new byte[8];
-            var r = stream.Read(bytes, offset, 4);
-            return BitConverter.ToUInt32(bytes, r);
+            var bytes = new byte[4];
+            stream.Read(bytes, 0, length);
+            return BitConverter.ToUInt32(bytes, 0);
         }
 
         public static string ReadString(this Stream stream, int length)
         {
             var bytes = new byte[length];
-            var r = stream.Read(bytes, 0, length);
-            //return BitConverter.ToString(bytes, r);
+            stream.Read(bytes, 0, length);
             return Encoding.Default.GetString(bytes);
         }
     }
