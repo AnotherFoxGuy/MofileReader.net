@@ -3,7 +3,7 @@ using System.IO;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 
-namespace moFileLib
+namespace MoFileLib
 {
     [HtmlExporter,  RPlotExporter]
     public class moFileLibBench

@@ -40,7 +40,7 @@ using System.Text;
 /** \namespace moFileLib
  * \brief This is the only namespace of this small sourcecode.
  */
-namespace moFileLib
+namespace MoFileLib
 {
     /// \brief Type for the list of all Translation-Pair-Descriptions.
     using moTranslationPairList = List<MoTranslationPairInformation>;

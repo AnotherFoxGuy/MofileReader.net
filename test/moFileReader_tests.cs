@@ -1,10 +1,10 @@
 using System;
 using System.IO;
 using NUnit.Framework;
-using static moFileLib.ConvenienceClasses;
+using static MoFileLib.ConvenienceClasses;
 using static CmakeData;
 
-namespace moFileLib
+namespace MoFileLib
 {
     [TestFixture]
     public class moFileLibTests
