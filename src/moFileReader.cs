@@ -32,21 +32,22 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/** \namespace moFileLib
- * \brief This is the only namespace of this small sourcecode.
- */
-
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
+/** \namespace moFileLib
+ * \brief This is the only namespace of this small sourcecode.
+ */
 namespace moFileLib
 {
     /// \brief Type for the list of all Translation-Pair-Descriptions.
-    using moTranslationPairList = List<moTranslationPairInformation>;
+    using moTranslationPairList = List<MoTranslationPairInformation>;
+    
     /// \brief Type for the map which holds the translation-pairs later.
     using moLookupList = Dictionary<string, string>;
+    
     /// \brief Type for the 2D map which holds the translation-pairs later.
     using moContextLookupList = Dictionary<string, Dictionary<string, string>>;
 
@@ -57,7 +58,7 @@ namespace moFileLib
      * To load a String from the file, we need its offset and its length.
      * This struct helps us grouping this information.
      */
-    public struct moTranslationPairInformation
+    public struct MoTranslationPairInformation
     {
         /// \brief Length of the Original String
         public int m_orLength;
@@ -82,7 +83,7 @@ namespace moFileLib
      * The constructor ensures, that all members get a nice
      * initial value.
      */
-    public struct moFileInfo
+    public struct MoFileInfo
     {
         /// \brief The Magic Number, compare it to g_MagicNumber.
         public uint m_magicNumber;
@@ -121,48 +122,46 @@ namespace moFileLib
      * 
      * The usage is quite simple:\n
      * Tell the class which .mo-file it shall load via
-     * moFileReader::ReadFile(). The method will attempt to load
+     * MoFileReader::ReadFile(). The method will attempt to load
      * the file, all translations will be stored in memory.
-     * Afterwards you can lookup the strings with moFileReader::Lookup() just
+     * Afterwards you can lookup the strings with MoFileReader::Lookup() just
      * like you would do with gettext.
-     * Additionally, you can call moFileReader::ReadFile() for as much files as you
+     * Additionally, you can call MoFileReader::ReadFile() for as much files as you
      * like. But please be aware, that if there are duplicated keys (original strings),
      * that they will replace each other in the lookup-table. There is no check done, if a
      * key already exists.
      * 
      * \note If you add "Lookup" to the keywords of the gettext-parser (like poEdit),
      * it will recognize the Strings loaded with an instance of this class.
-     * \note I strongly recommend poEdit from Vaclav Slavik for editing .po-Files,
-     * get it at http://poedit.net for various systems :).
      */
-    public class moFileReader
+    public class MoFileReader
     {
         /// \brief The possible errorcodes for methods of this class
         public enum ErrorCode
         {
             /// \brief Indicated success
-            SUCCESS,
+            Success,
 
             /// \brief Indicates an error
-            ERROR,
+            Error,
 
             /// \brief The given File was not found.
-            FILENOTFOUND,
+            FileNotFound,
 
             /// \brief The file is invalid.
-            FILEINVALID,
+            FileInvalid,
 
             /// \brief Empty Lookup-Table (returned by ExportAsHTML())
-            TABLEEMPTY,
+            TableEmpty,
 
             /// \brief The magic number did not match
-            MAGICNUMBER_NOMATCH,
+            MagicnumberNomatch,
 
             /**
              * \brief The magic number is reversed.
              * \note This is an error until the class supports it.
              */
-            MAGICNUMBER_REVERSED
+            MagicnumberReversed
         }
 
         /// \brief The Magic Number describes the endianess of bytes on the system.
@@ -206,13 +205,13 @@ namespace moFileLib
             })";
 
         /// \brief Keeps the last error as String.
-        private string m_error;
+        private string _error;
 
         // Holds the lookup-table
-        private moLookupList m_lookup;
-        private moContextLookupList m_lookup_context;
+        private moLookupList _lookup;
+        private moContextLookupList _lookupContext;
 
-        private int numStrings;
+        private int _numStrings;
 
 
         /**
@@ -248,8 +247,8 @@ namespace moFileLib
         {
             if (!File.Exists(filename))
             {
-                m_error = $"Cannot open File {filename}";
-                return ErrorCode.FILENOTFOUND;
+                _error = $"Cannot open File {filename}";
+                return ErrorCode.FileNotFound;
             }
             // Opening the file.
 
@@ -266,14 +265,14 @@ namespace moFileLib
         private ErrorCode ReadStream(Stream stream)
         {
             // Creating a file-description.
-            moFileInfo moInfo;
+            MoFileInfo moInfo;
 
-            m_lookup = new moLookupList();
-            m_lookup_context = new moContextLookupList();
+            _lookup = new moLookupList();
+            _lookupContext = new moContextLookupList();
 
             // Reference to the List inside moInfo.
             moInfo.m_translationPairInformation = new moTranslationPairList();
-            var TransPairInfo = moInfo.m_translationPairInformation;
+            var transPairInfo = moInfo.m_translationPairInformation;
 
             // Read in all the 4 bytes of fire-magic, offsets and stuff...
             moInfo.m_magicNumber = stream.ReadUInt(4);
@@ -286,8 +285,8 @@ namespace moFileLib
 
             if (moInfo.m_magicNumber == 0 || moInfo.m_numStrings == 0)
             {
-                m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
-                return ErrorCode.FILEINVALID;
+                _error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
+                return ErrorCode.FileInvalid;
             }
 
             // Checking the Magic Number
@@ -295,30 +294,30 @@ namespace moFileLib
             {
                 if (MagicReversed != moInfo.m_magicNumber)
                 {
-                    m_error = "The Magic Number does not match in all cases!";
-                    return ErrorCode.MAGICNUMBER_NOMATCH;
+                    _error = "The Magic Number does not match in all cases!";
+                    return ErrorCode.MagicnumberNomatch;
                 }
 
                 moInfo.m_reversed = true;
-                m_error = "Magic Number is reversed. We do not support this yet!";
-                return ErrorCode.MAGICNUMBER_REVERSED;
+                _error = "Magic Number is reversed. We do not support this yet!";
+                return ErrorCode.MagicnumberReversed;
             }
 
             // Now we search all Length & Offsets of the original strings
             for (var i = 0; i < moInfo.m_numStrings; i++)
                 try
                 {
-                    var str = new moTranslationPairInformation
+                    var str = new MoTranslationPairInformation
                     {
                         m_orLength = stream.ReadInt(4),
                         m_orOffset = stream.ReadInt(4)
                     };
-                    TransPairInfo.Add(str);
+                    transPairInfo.Add(str);
                 }
                 catch
                 {
-                    m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
-                    return ErrorCode.FILEINVALID;
+                    _error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
+                    return ErrorCode.FileInvalid;
                 }
 
             // Get all Lengths & Offsets of the translated strings
@@ -326,15 +325,15 @@ namespace moFileLib
             for (var i = 0; i < moInfo.m_numStrings; i++)
                 try
                 {
-                    var str = TransPairInfo[i];
+                    var str = transPairInfo[i];
                     str.m_trLength = stream.ReadInt(4);
                     str.m_trOffset = stream.ReadInt(4);
-                    TransPairInfo[i] = str;
+                    transPairInfo[i] = str;
                 }
                 catch
                 {
-                    m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
-                    return ErrorCode.FILEINVALID;
+                    _error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
+                    return ErrorCode.FileInvalid;
                 }
 
             // Normally you would read the hash-table here, but we don't use it. :)
@@ -343,14 +342,13 @@ namespace moFileLib
             for (var i = 0; i < moInfo.m_numStrings; i++)
             {
                 // We need a length of +1 to catch the trailing \0.
-                var orLength = TransPairInfo[i].m_orLength;
-                var trLength = TransPairInfo[i].m_trLength;
+                var orLength = transPairInfo[i].m_orLength;
+                var trLength = transPairInfo[i].m_trLength;
 
-                var orOffset = TransPairInfo[i].m_orOffset;
-                var trOffset = TransPairInfo[i].m_trOffset;
+                var orOffset = transPairInfo[i].m_orOffset;
+                var trOffset = transPairInfo[i].m_trOffset;
 
-                var original = "";
-                var translation = "";
+                string original, translation;
 
                 // Original
                 try
@@ -360,8 +358,8 @@ namespace moFileLib
                 }
                 catch
                 {
-                    m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
-                    return ErrorCode.FILEINVALID;
+                    _error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
+                    return ErrorCode.FileInvalid;
                 }
 
                 // Translation
@@ -372,8 +370,8 @@ namespace moFileLib
                 }
                 catch
                 {
-                    m_error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
-                    return ErrorCode.FILEINVALID;
+                    _error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
+                    return ErrorCode.FileInvalid;
                 }
 
                 var ctxSeparator = original.IndexOf(ContextSeparator);
@@ -381,31 +379,31 @@ namespace moFileLib
                 // Store it in the map.
                 if (ctxSeparator == -1)
                 {
-                    m_lookup[original] = translation;
-                    numStrings++;
+                    _lookup[original] = translation;
+                    _numStrings++;
                 }
                 else
                 {
                     var l = original.Split(ContextSeparator);
                     if (l.Length != 2)
                     {
-                        m_error = "Failed to split string";
-                        return ErrorCode.ERROR;
+                        _error = "Failed to split string";
+                        return ErrorCode.Error;
                     }
 
                     var context = l[0];
                     var id = l[1];
 
-                    if (!m_lookup_context.ContainsKey(context))
-                        m_lookup_context.Add(context, new Dictionary<string, string>());
+                    if (!_lookupContext.ContainsKey(context))
+                        _lookupContext.Add(context, new Dictionary<string, string>());
 
-                    m_lookup_context[context][id] = translation;
-                    numStrings++;
+                    _lookupContext[context][id] = translation;
+                    _numStrings++;
                 }
             }
 
             // Done :)
-            return ErrorCode.SUCCESS;
+            return ErrorCode.Success;
         }
 
         /**
@@ -415,8 +413,8 @@ namespace moFileLib
          */
         public string Lookup(string id)
         {
-            if (m_lookup.Count == 0) return id;
-            return m_lookup.ContainsKey(id) ? m_lookup[id] : id;
+            if (_lookup.Count == 0) return id;
+            return _lookup.ContainsKey(id) ? _lookup[id] : id;
         }
 
         /**
@@ -428,26 +426,26 @@ namespace moFileLib
          */
         public string LookupWithContext(string context, string id)
         {
-            if (m_lookup_context.Count == 0 ||
-                !m_lookup_context.ContainsKey(context) ||
-                !m_lookup_context[context].ContainsKey(id))
+            if (_lookupContext.Count == 0 ||
+                !_lookupContext.ContainsKey(context) ||
+                !_lookupContext[context].ContainsKey(id))
                 return id;
 
-            return m_lookup_context[context][id];
+            return _lookupContext[context][id];
         }
 
         /// \brief Returns the Error Description.
         internal string GetErrorDescription()
         {
-            return m_error;
+            return _error;
         }
 
         /// \brief Empties the Lookup-Table.
         public void ClearTable()
         {
-            m_lookup.Clear();
-            m_lookup_context.Clear();
-            numStrings = 0;
+            _lookup.Clear();
+            _lookupContext.Clear();
+            _numStrings = 0;
         }
 
         /**
@@ -457,7 +455,7 @@ namespace moFileLib
          */
         public int GetNumStrings()
         {
-            return numStrings;
+            return _numStrings;
         }
 
         /**
@@ -468,7 +466,7 @@ namespace moFileLib
          * file, in case you don't like mine ;).
          * \see g_css for the possible and used css-values.
          */
-        private static ErrorCode ExportAsHTML(string infile, string filename = "", string css = g_css)
+        private static ErrorCode ExportAsHtml(string infile, string filename = "", string css = g_css)
         {
             // // Read the file
             // moFileReader reader;
@@ -576,7 +574,7 @@ namespace moFileLib
             //     return moFileReader::EC_FILENOTFOUND;
             // }
 
-            return ErrorCode.SUCCESS;
+            return ErrorCode.Success;
         }
 
         /**
@@ -661,14 +659,14 @@ namespace moFileLib
      * - moFileGetErrorDescription()
      * - moFileGetNumStrings();
      */
-    public class moFileReaderSingleton : moFileReader
+    public class MoFileReaderSingleton : MoFileReader
     {
-        private static readonly Lazy<moFileReader> theoneandonly =
-            new(() => new moFileReader());
+        private static readonly Lazy<MoFileReader> TheOneAndOnly =
+            new(() => new MoFileReader());
 
         // Private Contructor and Copy-Constructor to avoid
         // that this class is instanced.
-        private moFileReaderSingleton()
+        private MoFileReaderSingleton()
         {
         }
 
@@ -676,7 +674,7 @@ namespace moFileLib
          * \brief Singleton-Accessor.
          * \return A static instance of moFileReaderSingleton.
          */
-        public static moFileReader Instance => theoneandonly.Value;
+        public static MoFileReader Instance => TheOneAndOnly.Value;
     }
 
     public static class ConvenienceClasses
@@ -686,42 +684,24 @@ namespace moFileLib
          * \param[in] _filename The path to the file to use.
          * \see moFileReader::ReadFile() for details.
          */
-        public static moFileReader.ErrorCode moReadMoFile(string _filename)
-        {
-            var r = moFileReaderSingleton.Instance.ReadFile(_filename);
-            return r;
-        }
+        public static MoFileReader.ErrorCode MoReadMoFile(string filename) =>
+            MoFileReaderSingleton.Instance.ReadFile(filename);
 
         /**
          * \brief Looks for the spec. string to translate.
          * \param[in] id The string-id to search.
          * \return The translation if found, otherwise it returns id.
          */
-        public static string _(string id)
-        {
-            var r = moFileReaderSingleton.Instance.Lookup(id);
-            return r;
-        }
+        public static string _(string id) => MoFileReaderSingleton.Instance.Lookup(id);
 
         /// \brief Resets the Lookup-Table.
-        public static void moFileClearTable()
-        {
-            moFileReaderSingleton.Instance.ClearTable();
-        }
+        public static void MoFileClearTable() => MoFileReaderSingleton.Instance.ClearTable();
 
         /// \brief Returns the last known error as string or an empty class.
-        public static string moFileGetErrorDescription()
-        {
-            var r = moFileReaderSingleton.Instance.GetErrorDescription();
-            return r;
-        }
+        public static string MoFileGetErrorDescription() => MoFileReaderSingleton.Instance.GetErrorDescription();
 
         /// \brief Returns the number of entries loaded from the .mo-File.
-        public static int moFileGetNumStrings()
-        {
-            var r = moFileReaderSingleton.Instance.GetNumStrings();
-            return r;
-        }
+        public static int MoFileGetNumStrings() => MoFileReaderSingleton.Instance.GetNumStrings();
     }
 
     internal static class StreamExtensions

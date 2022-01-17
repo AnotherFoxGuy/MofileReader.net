@@ -10,13 +10,13 @@ namespace moFileLib
     {
         private string MO_TEST_FILE = "languages/nl.mo";
 
-        private moFileReader moFR;
+        private MoFileReader moFR;
         
         public moFileLibBench()
         {
-            moFR = new moFileReader();
+            moFR = new MoFileReader();
             var res = moFR.ReadFile(MO_TEST_FILE);
-            if (res != moFileReader.ErrorCode.SUCCESS)
+            if (res != MoFileReader.ErrorCode.Success)
             {
                 throw new Exception(moFR.GetErrorDescription());
             }
