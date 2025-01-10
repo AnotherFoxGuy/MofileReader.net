@@ -35,11 +35,11 @@ namespace MoFileLib
         }
     }
 
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            var summary = BenchmarkRunner.Run<moFileLibBench>();
-        }
-    }
+    // public class Program
+    // {
+    //     public static void Main(string[] args)
+    //     {
+    //         var summary = BenchmarkRunner.Run<moFileLibBench>();
+    //     }
+    // }
 }

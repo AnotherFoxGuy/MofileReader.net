@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.002.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MofileReader.net", "src\MofileReader.net.csproj", "{60A8B0EC-BBAF-4AF7-9104-D04F2C73DD3B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MofileReader.net.tests.csproj", "test\MofileReader.net.tests.csproj", "{5FE8F82A-F717-496C-8976-E05EE162F2B1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BAAC50E4-849D-4600-B18A-936B1C0DE5B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BAAC50E4-849D-4600-B18A-936B1C0DE5B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BAAC50E4-849D-4600-B18A-936B1C0DE5B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BAAC50E4-849D-4600-B18A-936B1C0DE5B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60A8B0EC-BBAF-4AF7-9104-D04F2C73DD3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60A8B0EC-BBAF-4AF7-9104-D04F2C73DD3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60A8B0EC-BBAF-4AF7-9104-D04F2C73DD3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60A8B0EC-BBAF-4AF7-9104-D04F2C73DD3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FE8F82A-F717-496C-8976-E05EE162F2B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FE8F82A-F717-496C-8976-E05EE162F2B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FE8F82A-F717-496C-8976-E05EE162F2B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FE8F82A-F717-496C-8976-E05EE162F2B1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {92C692B1-7150-40ED-8070-C8EB73421A12}
+	EndGlobalSection
+EndGlobal

@@ -61,16 +61,16 @@ namespace MoFileLib
     public struct MoTranslationPairInformation
     {
         /// \brief Length of the Original String
-        public int m_orLength;
+        public int OrLength;
 
         /// \brief Offset of the Original String (absolute)
-        public int m_orOffset;
+        public int OrOffset;
 
         /// \brief Length of the Translated String
-        public int m_trLength;
+        public int TrLength;
 
         /// \brief Offset of the Translated String (absolute)
-        public int m_trOffset;
+        public int TrOffset;
     }
 
     /**
@@ -86,34 +86,34 @@ namespace MoFileLib
     public struct MoFileInfo
     {
         /// \brief The Magic Number, compare it to g_MagicNumber.
-        public uint m_magicNumber;
+        public uint MagicNumber;
 
         /// \brief The File Version, 0 atm according to the manpage.
-        public int m_fileVersion;
+        public int FileVersion;
 
         /// \brief Number of Strings in the .mo-file.
-        public int m_numStrings;
+        public int NumStrings;
 
         /// \brief Offset of the Table of the Original Strings
-        public int m_offsetOriginal;
+        public int OffsetOriginal;
 
         /// \brief Offset of the Table of the Translated Strings
-        public int m_offsetTranslation;
+        public int OffsetTranslation;
 
         /// \brief Size of 1 Entry in the Hashtable.
-        public int m_sizeHashtable;
+        public int SizeHashtable;
 
         /// \brief The Offset of the Hashtable.
-        public int m_offsetHashtable;
+        public int OffsetHashtable;
 
         /**
          * \brief Tells you if the bytes are reversed
          * \note When this is true, the bytes are reversed and the Magic number is like g_MagicReversed
          */
-        public bool m_reversed;
+        public bool Reversed;
 
         /// \brief A list containing offset and length of the strings in the file.
-        public moTranslationPairList m_translationPairInformation;
+        public moTranslationPairList TranslationPairInformation;
     }
 
     /**
@@ -271,46 +271,54 @@ namespace MoFileLib
             _lookupContext = new moContextLookupList();
 
             // Reference to the List inside moInfo.
-            moInfo.m_translationPairInformation = new moTranslationPairList();
-            var transPairInfo = moInfo.m_translationPairInformation;
+            moInfo.TranslationPairInformation = new moTranslationPairList();
+            var transPairInfo = moInfo.TranslationPairInformation;
 
             // Read in all the 4 bytes of fire-magic, offsets and stuff...
-            moInfo.m_magicNumber = stream.ReadUInt(4);
-            moInfo.m_fileVersion = stream.ReadInt(4);
-            moInfo.m_numStrings = stream.ReadInt(4);
-            moInfo.m_offsetOriginal = stream.ReadInt(4);
-            moInfo.m_offsetTranslation = stream.ReadInt(4);
-            moInfo.m_sizeHashtable = stream.ReadInt(4);
-            moInfo.m_offsetHashtable = stream.ReadInt(4);
+            try
+            {
+                moInfo.MagicNumber = stream.ReadUInt(4);
+                moInfo.FileVersion = stream.ReadInt(4);
+                moInfo.NumStrings = stream.ReadInt(4);
+                moInfo.OffsetOriginal = stream.ReadInt(4);
+                moInfo.OffsetTranslation = stream.ReadInt(4);
+                moInfo.SizeHashtable = stream.ReadInt(4);
+                moInfo.OffsetHashtable = stream.ReadInt(4);
+            }
+            catch (Exception e)
+            {
+                _error = e.Message;
+                return ErrorCode.FileInvalid;
+            }
 
-            if (moInfo.m_magicNumber == 0 || moInfo.m_numStrings == 0)
+            if (moInfo.MagicNumber == 0 || moInfo.NumStrings == 0)
             {
                 _error = "Stream bad during reading. The .mo-file seems to be invalid or has bad descriptions!";
                 return ErrorCode.FileInvalid;
             }
 
             // Checking the Magic Number
-            if (MagicNumber != moInfo.m_magicNumber)
+            if (MagicNumber != moInfo.MagicNumber)
             {
-                if (MagicReversed != moInfo.m_magicNumber)
+                if (MagicReversed != moInfo.MagicNumber)
                 {
                     _error = "The Magic Number does not match in all cases!";
                     return ErrorCode.MagicnumberNomatch;
                 }
 
-                moInfo.m_reversed = true;
+                moInfo.Reversed = true;
                 _error = "Magic Number is reversed. We do not support this yet!";
                 return ErrorCode.MagicnumberReversed;
             }
 
             // Now we search all Length & Offsets of the original strings
-            for (var i = 0; i < moInfo.m_numStrings; i++)
+            for (var i = 0; i < moInfo.NumStrings; i++)
                 try
                 {
                     var str = new MoTranslationPairInformation
                     {
-                        m_orLength = stream.ReadInt(4),
-                        m_orOffset = stream.ReadInt(4)
+                        OrLength = stream.ReadInt(4),
+                        OrOffset = stream.ReadInt(4)
                     };
                     transPairInfo.Add(str);
                 }
@@ -322,12 +330,12 @@ namespace MoFileLib
 
             // Get all Lengths & Offsets of the translated strings
             // Be aware: The Descriptors already exist in our list, so we just mod. refs from the deque.
-            for (var i = 0; i < moInfo.m_numStrings; i++)
+            for (var i = 0; i < moInfo.NumStrings; i++)
                 try
                 {
                     var str = transPairInfo[i];
-                    str.m_trLength = stream.ReadInt(4);
-                    str.m_trOffset = stream.ReadInt(4);
+                    str.TrLength = stream.ReadInt(4);
+                    str.TrOffset = stream.ReadInt(4);
                     transPairInfo[i] = str;
                 }
                 catch
@@ -339,14 +347,14 @@ namespace MoFileLib
             // Normally you would read the hash-table here, but we don't use it. :)
 
             // Now to the interesting part, we read the strings-pairs now
-            for (var i = 0; i < moInfo.m_numStrings; i++)
+            for (var i = 0; i < moInfo.NumStrings; i++)
             {
                 // We need a length of +1 to catch the trailing \0.
-                var orLength = transPairInfo[i].m_orLength;
-                var trLength = transPairInfo[i].m_trLength;
+                var orLength = transPairInfo[i].OrLength;
+                var trLength = transPairInfo[i].TrLength;
 
-                var orOffset = transPairInfo[i].m_orOffset;
-                var trOffset = transPairInfo[i].m_trOffset;
+                var orOffset = transPairInfo[i].OrOffset;
+                var trOffset = transPairInfo[i].TrOffset;
 
                 string original, translation;
 
@@ -435,7 +443,7 @@ namespace MoFileLib
         }
 
         /// \brief Returns the Error Description.
-        internal string GetErrorDescription()
+        public string GetErrorDescription()
         {
             return _error;
         }
@@ -476,7 +484,7 @@ namespace MoFileLib
             //     return r;
             // }
             //
-            // if (reader.m_lookup.empty())
+            // if (reader.lookup.empty())
             // {
             //     return moFileReader::EC_TABLEEMPTY;
             // }
@@ -539,7 +547,7 @@ namespace MoFileLib
             //     // Now output the content
             //     stream << R"(<table border="1"><th colspan="2">Content</th>)" << std::endl;
             //     for ( const auto 
-            //     &it : reader.m_lookup)
+            //     &it : reader.lookup)
             //     {
             //         if (!it.first.empty()) // Skip the empty msgid, its the table we handled above.
             //         {
@@ -550,7 +558,7 @@ namespace MoFileLib
             //
             //     // Separate tables for each context
             //     for ( const auto 
-            //     &it : reader.m_lookup_context)
+            //     &it : reader.lookup_context)
             //     {
             //         stream << R"(<table border="1"><th colspan="2">)" << it.first << "</th>" << std::endl;
             //         for ( const auto 
