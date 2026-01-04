@@ -208,8 +208,8 @@ namespace MoFileLib
         private string _error;
 
         // Holds the lookup-table
-        private moLookupList _lookup;
-        private moContextLookupList _lookupContext;
+        private moLookupList _lookup = new moLookupList();
+        private moContextLookupList _lookupContext = new moContextLookupList();
 
         private int _numStrings;
 

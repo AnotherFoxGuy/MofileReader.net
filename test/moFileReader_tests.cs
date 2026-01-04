@@ -23,8 +23,14 @@ namespace MoFileLib
         public void LoadBrokenFile()
         {
             var moFR = new MoFileReader();
+            var errorCode = moFR.ReadFile("languages/fail.txt");
             Console.WriteLine(moFR.GetErrorDescription());
-            Assert.That(moFR.ReadFile("languages/fail.txt"), Is.EqualTo(MoFileReader.ErrorCode.FileInvalid));
+            Assert.That(errorCode, Is.EqualTo(MoFileReader.ErrorCode.FileInvalid));
+            Assert.Multiple(() =>
+            {
+                Assert.That(moFR.Lookup("String English One"), Is.EqualTo("String English One"));
+                Assert.That(moFR.GetNumStrings(), Is.EqualTo(0));
+            });
         }
 
         [Test]
